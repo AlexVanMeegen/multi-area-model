@@ -1,0 +1,259 @@
+============================= test session starts ==============================
+platform linux -- Python 3.6.2, pytest-3.2.1, py-1.4.34, pluggy-0.4.0
+rootdir: /mnt/beegfs/home/a.van.meegen/multi-area-model/tests, inifile:
+collected 20 items
+
+test_analysis.py .
+test_meanfield.py .
+test_nest_network_connectivity.py .
+test_network_initialization.py .
+test_network_params.py ...
+test_network_scaling.py F
+test_parameter_check.py ....
+test_replace_cc.py F....
+test_simulate_V1.py ...
+
+=================================== FAILURES ===================================
+_____________________________ test_network_scaling _____________________________
+
+    def test_network_scaling():
+        """
+        Test the downscaling option of the network.
+    
+        - Test whether indegrees and neuron number are correctly scaled down.
+        - Test whether the resulting mean and variance of the input currents
+          as well as the resulting rates are identical, based on mean-field theory.
+        """
+    
+        network_params = {}
+        M0 = MultiAreaModel(network_params, theory=True)
+        K0 = M0.K_matrix
+        W0 = M0.W_matrix
+        N0 = M0.N_vec
+        syn0 = M0.syn_matrix
+        p, r0 = M0.theory.integrate_siegert()
+    
+        d = vector_to_dict(r0[:, -1],
+                           M0.area_list,
+                           M0.structure)
+    
+        with open('mf_rates.json', 'w') as f:
+            json.dump(d, f)
+    
+        network_params = {'N_scaling': .1,
+                          'K_scaling': .1,
+                          'fullscale_rates': 'mf_rates.json'}
+        theory_params = {'initial_rates': r0[:, -1]}
+        M = MultiAreaModel(network_params, theory=True, theory_spec=theory_params)
+    
+        K = M.K_matrix
+        W = M.W_matrix
+        N = M.N_vec
+        syn = M.syn_matrix
+        p, r = M.theory.integrate_siegert()
+    
+        assert(np.allclose(K, network_params['K_scaling'] * K0))
+        assert(np.allclose(N, network_params['N_scaling'] * N0))
+        assert(np.allclose(syn, network_params['K_scaling'] * network_params['N_scaling'] * syn0))
+        assert(np.allclose(W, W0 / np.sqrt(network_params['K_scaling'])))
+    
+        r0_extend = np.append(r0[:, -1], M0.params['input_params']['rate_ext'])
+        tau_m = M.params['neuron_params']['single_neuron_dict']['tau_m']
+        C_m = M.params['neuron_params']['single_neuron_dict']['C_m']
+    
+        mu0 = (1e-3 * tau_m * np.dot(M0.K_matrix * M0.J_matrix, r0_extend)
+               + tau_m / C_m * M0.add_DC_drive)
+        mu = 1e-3 * tau_m * np.dot(M.K_matrix * M.J_matrix, r0_extend) + tau_m / C_m * M.add_DC_drive
+    
+        sigma0 = np.sqrt(1e-3 * tau_m * np.dot(M0.K_matrix * M0.J_matrix**2, r0_extend))
+        sigma = np.sqrt(1e-3 * tau_m * np.dot(M.K_matrix * M.J_matrix**2, r0_extend))
+    
+        assert(np.allclose(mu, mu0))
+        assert(np.allclose(sigma, sigma0))
+>       assert(np.allclose(r[:, -1], r0[:, -1]))
+E       assert False
+E        +  where False = <function allclose at 0x7f055e521e18>(array([  1.99857869e+00,   1.97713451e+00,   5.06487184e+00,\n         2.58452590e+00,   1.75780708e+00,   4.40851158e+....08968204e-03,\n         2.51169623e+00,   2.32047696e-04,   4.30595668e+00,\n         1.96337917e-07,   4.43825322e+00]), array([  7.61476573e-01,   1.34679789e+00,   3.17577294e+00,\n         1.97274793e+00,   1.02894880e+00,   3.54063658e+....08709780e-03,\n         2.51177767e+00,   2.32255960e-04,   4.30479710e+00,\n         1.96229678e-07,   4.43795094e+00]))
+E        +    where <function allclose at 0x7f055e521e18> = np.allclose
+
+test_network_scaling.py:61: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Initializing network from dictionary.
+RAND_DATA_LABEL 8558
+No R installation, taking hard-coded fit parameters.
+
+
+========================================
+Customized parameters
+--------------------
+{}
+========================================
+Iteration 0
+Initializing network from dictionary.
+RAND_DATA_LABEL 8095
+No R installation, taking hard-coded fit parameters.
+
+
+========================================
+Customized parameters
+--------------------
+{'K_scaling': 0.1, 'N_scaling': 0.1, 'fullscale_rates': 'mf_rates.json'}
+========================================
+Iteration 0
+___________________________ test_het_poisson_stat_mf ___________________________
+
+    def test_het_poisson_stat_mf():
+        network_params = {}
+        theory_params = {}
+        M0 = MultiAreaModel(network_params, theory=True, theory_spec=theory_params)
+        p, r0 = M0.theory.integrate_siegert()
+    
+        rates = vector_to_dict(r0[:, -1], M0.area_list, M0.structure)
+        with open('mf_rates.json', 'w') as f:
+            json.dump(rates, f)
+    
+        network_params = {'connection_params': {'replace_cc': 'het_poisson_stat',
+                                                'replace_cc_input_source': 'mf_rates.json'}}
+        theory_params = {}
+        M = MultiAreaModel(network_params, theory=True, theory_spec=theory_params)
+        p, r = M.theory.integrate_siegert()
+    
+>       assert(np.allclose(r0[:, -1], r[:, -1]))
+E       assert False
+E        +  where False = <function allclose at 0x7f055e521e18>(array([  7.61476573e-01,   1.34679789e+00,   3.17577294e+00,\n         1.97274793e+00,   1.02894880e+00,   3.54063658e+....08709780e-03,\n         2.51177767e+00,   2.32255960e-04,   4.30479710e+00,\n         1.96229678e-07,   4.43795094e+00]), array([  7.81363061e-01,   1.49088639e+00,   3.30385524e+00,\n         2.19831948e+00,   1.02813892e+00,   3.53905259e+....08590955e-03,\n         2.51162432e+00,   2.32219372e-04,   4.30461044e+00,\n         1.96184453e-07,   4.43776701e+00]))
+E        +    where <function allclose at 0x7f055e521e18> = np.allclose
+
+test_replace_cc.py:31: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Initializing network from dictionary.
+RAND_DATA_LABEL 5306
+No R installation, taking hard-coded fit parameters.
+
+
+========================================
+Customized parameters
+--------------------
+{}
+========================================
+Iteration 0
+Initializing network from dictionary.
+RAND_DATA_LABEL 6935
+No R installation, taking hard-coded fit parameters.
+
+
+========================================
+Customized parameters
+--------------------
+{'connection_params': {'replace_cc': 'het_poisson_stat',
+                       'replace_cc_input_source': 'mf_rates.json'}}
+========================================
+Iteration 0
+=============================== warnings summary ===============================
+test_analysis.py::test_analysis
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/nest-2.14.0-python3/lib64/python3.6/site-packages/nest/lib/hl_api_helper.py:92: UserWarning: 
+  GetNodes is deprecated and will be removed in NEST 3.0. Use GIDCollection instead.
+    warnings.warn('\n' + text)   # add LF so text starts on new line
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/multi-area-model/multiarea_model/analysis_helpers.py:712: RuntimeWarning: invalid value encountered in double_scalars
+    synchrony = variance / mean
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/numpy/core/_methods.py:135: RuntimeWarning: Degrees of freedom <= 0 for slice
+    keepdims=keepdims)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/numpy/core/_methods.py:105: RuntimeWarning: invalid value encountered in true_divide
+    arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/numpy/core/_methods.py:127: RuntimeWarning: invalid value encountered in true_divide
+    ret = ret.dtype.type(ret / rcount)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/numpy/core/fromnumeric.py:2909: RuntimeWarning: Mean of empty slice.
+    out=out, **kwargs)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/numpy/core/_methods.py:80: RuntimeWarning: invalid value encountered in true_divide
+    ret = ret.dtype.type(ret / rcount)
+
+test_meanfield.py::test_meanfield
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_nest_network_connectivity.py::test_nest_network_connectivity
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_network_initialization.py::test_network_initialization
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_network_params.py::test_average_indegree
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_network_params.py::test_external_indegrees
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_network_params.py::test_syn_weights
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_network_scaling.py::test_network_scaling
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/multi-area-model/multiarea_model/theory.py:134: FutureWarning: elementwise comparison failed; returning scalar instead, but in the future will perform elementwise comparison
+    if self.params['initial_rates'] == 'random_uniform':
+
+test_parameter_check.py::test_sim_params
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_parameter_check.py::test_theory_params
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_replace_cc.py::test_het_poisson_stat_mf
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_replace_cc.py::test_hom_poisson_stat_mf
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_replace_cc.py::test_het_poisson_stat_sim
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_replace_cc.py::test_hom_poisson_stat_sim
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_replace_cc.py::test_het_current_non_stat_sim
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_simulate_V1.py::test_het_poisson_stat_sim
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_simulate_V1.py::test_hom_poisson_stat_sim
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+test_simulate_V1.py::test_het_current_non_stat_sim
+  /home/a.van.meegen/.conda/envs/multiarea_model/lib/python3.6/site-packages/dicthash/dicthash.py:43: UserWarning: Float too small for safe conversion tointeger. Rounding down to zero.
+    'integer. Rounding down to zero.', UserWarning)
+
+-- Docs: http://doc.pytest.org/en/latest/warnings.html
+============== 2 failed, 18 passed, 35 warnings in 369.13 seconds ==============
