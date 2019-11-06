@@ -6,3 +6,6 @@ tests/.pytest_cache/*
 
 figures/*/.snakemake/*
 figures/*/tex/*
+
+config.py
+multiarea_model/data_multiarea/viscortex_processed_data.json
