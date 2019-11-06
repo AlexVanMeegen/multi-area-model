@@ -41,18 +41,18 @@ for name, label in sim_labels.items():
     print('loaded {}'.format(name))
 
 
-fig = plt.figure(figsize=(13, 4))
+fig = plt.figure(figsize=(13, 6))
 axes = {}
 
 gs1 = gridspec.GridSpec(1, 3)
-gs1.update(left=0.06, right=0.96, top=0.60, wspace=0.7, bottom=0.10)
+gs1.update(left=0.06, right=0.96, top=0.50, wspace=0.7, bottom=0.10)
 axes['A'] = plt.subplot(gs1[0, 0])
 axes['B'] = plt.subplot(gs1[0, 1])
 axes['C'] = plt.subplot(gs1[0, 2])
 axes_names = {'A': 'small', 'B': 'medium', 'C': 'big'}
 
 for label, ax in axes.items():
-    label_pos = [-0.2, 1.61]
+    label_pos = [-0.2, 2.1]
     plt.text(label_pos[0], label_pos[1], label,
              fontdict={'fontsize': 18, 'weight': 'bold',
                        'horizontalalignment': 'left', 'verticalalignment':
@@ -131,9 +131,9 @@ svgPlotMpl = svgMpl.getroot()
 svgPlotSketchSmall = svgSketchSmall.getroot()
 svgPlotSketchMedium = svgSketchMedium.getroot()
 svgPlotSketchBig = svgSketchBig.getroot()
-svgPlotSketchSmall.moveto(125, 10, scale=0.20)
-svgPlotSketchMedium.moveto(450, 10, scale=0.20)
-svgPlotSketchBig.moveto(775, 10, scale=0.20)
+svgPlotSketchSmall.moveto(56, 10, scale=0.311)
+svgPlotSketchMedium.moveto(381, 10, scale=0.311)
+svgPlotSketchBig.moveto(706, 10, scale=0.311)
 xSize, ySize = svgMpl.get_size()
 xSize = float(xSize)
 ySize = float(ySize)
