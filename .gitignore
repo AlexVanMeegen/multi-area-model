@@ -9,3 +9,6 @@ figures/*/tex/*
 
 config.py
 multiarea_model/data_multiarea/viscortex_processed_data.json
+
+cetraro.pdf
+cetraro.svg
