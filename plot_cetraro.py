@@ -41,7 +41,7 @@ for name, label in sim_labels.items():
     print('loaded {}'.format(name))
 
 
-fig = plt.figure(figsize=(13, 6))
+fig = plt.figure(figsize=(12.2, 5.630769231))
 axes = {}
 
 gs1 = gridspec.GridSpec(1, 3)
@@ -131,9 +131,9 @@ svgPlotMpl = svgMpl.getroot()
 svgPlotSketchSmall = svgSketchSmall.getroot()
 svgPlotSketchMedium = svgSketchMedium.getroot()
 svgPlotSketchBig = svgSketchBig.getroot()
-svgPlotSketchSmall.moveto(56, 10, scale=0.360)
-svgPlotSketchMedium.moveto(366, 10, scale=0.360)
-svgPlotSketchBig.moveto(676, 10, scale=0.360)
+svgPlotSketchSmall.moveto(53, 10, scale=0.3373)
+svgPlotSketchMedium.moveto(344, 10, scale=0.3373)
+svgPlotSketchBig.moveto(635, 10, scale=0.3373)
 xSize, ySize = svgMpl.get_size()
 xSize = float(xSize)
 ySize = float(ySize)
