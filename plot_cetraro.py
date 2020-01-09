@@ -41,7 +41,7 @@ for name, label in sim_labels.items():
     print('loaded {}'.format(name))
 
 
-fig = plt.figure(figsize=(13, 6))
+fig = plt.figure(figsize=(12.2, 6))
 axes = {}
 
 gs1 = gridspec.GridSpec(1, 3)
